@@ -4,11 +4,21 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+## This script will generate a reference documentation site into ./docs/generated/reference/output
+## It requires a number of tools be installed:
+##
+## * openapi-gen
+## * gen-apidocs
+## * docker
+##
+
 SCRIPT_ROOT=$(dirname "${BASH_SOURCE}")/..
 
 REFERENCE_PATH="docs/generated/reference"
 REFERENCE_ROOT=$(cd "${SCRIPT_ROOT}/${REFERENCE_PATH}" 2> /dev/null && pwd -P)
 
+## cleanup removes files that are leftover from running various tools and not required
+## for the actual output
 cleanup() {
     pushd "${REFERENCE_ROOT}"
     echo "+++ Cleaning up temporary docsgen files"
