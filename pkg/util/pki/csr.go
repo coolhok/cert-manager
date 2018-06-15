@@ -83,11 +83,16 @@ func GenerateTemplate(issuer v1alpha1.GenericIssuer, crt *v1alpha1.Certificate, 
 		return nil, fmt.Errorf("failed to generate serial number: %s", err.Error())
 	}
 
+	keyUsages := x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment
+	if crt.Spec.IsCA {
+		keyUsages |= x509.KeyUsageCertSign
+	}
 	return &x509.Certificate{
 		Version:               3,
 		BasicConstraintsValid: true,
 		SerialNumber:          serialNumber,
 		SignatureAlgorithm:    defaultSignatureAlgorithm,
+		IsCA:                  crt.Spec.IsCA,
 		Subject: pkix.Name{
 			Organization: []string{defaultOrganization},
 			CommonName:   commonName,
@@ -95,7 +100,7 @@ func GenerateTemplate(issuer v1alpha1.GenericIssuer, crt *v1alpha1.Certificate, 
 		NotBefore: time.Now(),
 		NotAfter:  time.Now().Add(defaultNotAfter),
 		// see http://golang.org/pkg/crypto/x509/#KeyUsage
-		KeyUsage: x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+		KeyUsage: keyUsages,
 		DNSNames: dnsNames,
 	}, nil
 }
