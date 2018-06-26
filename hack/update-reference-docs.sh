@@ -62,9 +62,13 @@ echo "+++ Creating temporary directories"
 # Create all required directories
 mkdir -p "${REFERENCE_ROOT}/openapi-spec"
 
+echo "+++ Building openapi-gen"
+OPENAPI_GEN="$(mktemp)"
+go build -o "${OPENAPI_GEN}" ./vendor/k8s.io/code-generator/cmd/openapi-gen
+
 echo "+++ Generating openapi_generated.go into 'github.com/jetstack/cert-manager/${REFERENCE_PATH}/openapi'"
 # Generate Golang types for OpenAPI spec
-openapi-gen \
+${OPENAPI_GEN} \
         --input-dirs github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha1,k8s.io/apimachinery/pkg/apis/meta/v1,k8s.io/apimachinery/pkg/runtime,k8s.io/apimachinery/pkg/version \
         --output-package "github.com/jetstack/cert-manager/${REFERENCE_PATH}/openapi"
 
@@ -80,9 +84,7 @@ gen-apidocs \
     --config-dir ./docs/generated/reference/
 
 echo "+++ Running brodocs"
-# Run brodocs
-docker run \
-    -v "${REFERENCE_ROOT}/includes:/source" \
-    -v "${OUTPUT_DIR}:/build" \
-    -v "${REFERENCE_ROOT}:/manifest" \
-    "gcr.io/kubebuilder/brodocs@sha256:81a93f8d3dde22288a2ac7ff287d8157ce60c3b4b29a6d66bdef58b4954d55c3"
+INCLUDES_DIR="${REFERENCE_ROOT}/includes" \
+OUTPUT_DIR="${OUTPUT_DIR}" \
+MANIFEST_PATH="${REFERENCE_ROOT}/manifest.json" \
+runbrodocs.sh
