@@ -4,7 +4,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-## This script will generate a reference documentation site into ./docs/generated/reference/output
+## This script will generate a reference documentation site into ./docs/generated/reference/reference/spec
 ## It requires a number of tools be installed:
 ##
 ## * openapi-gen
@@ -16,6 +16,7 @@ SCRIPT_ROOT=$(dirname "${BASH_SOURCE}")/..
 
 REFERENCE_PATH="docs/generated/reference"
 REFERENCE_ROOT=$(cd "${SCRIPT_ROOT}/${REFERENCE_PATH}" 2> /dev/null && pwd -P)
+OUTPUT_DIR="${REFERENCE_ROOT}/output/reference/api-docs"
 
 ## cleanup removes files that are leftover from running various tools and not required
 ## for the actual output
@@ -23,7 +24,7 @@ cleanup() {
     pushd "${REFERENCE_ROOT}"
     echo "+++ Cleaning up temporary docsgen files"
     # Clean up old temporary files
-    find "./output" \
+    find "${OUTPUT_DIR}" \
         -type f \
         -not -name bootstrap.min.css \
         -not -name font-awesome.min.css \
@@ -40,7 +41,7 @@ cleanup() {
         -not -name fontawesome-webfont.woff \
         -not -name fontawesome-webfont.woff2 \
         -exec rm -Rf {} \; || true
-    find "./output" \
+    find "${OUTPUT_DIR}" \
         -type d \
         -empty \
         -print0 | xargs -0 rmdir || true
@@ -51,9 +52,11 @@ cleanup() {
 
 trap cleanup EXIT
 
+mkdir -p "${OUTPUT_DIR}"
+
 cleanup
 echo "+++ Removing old output"
-rm -Rf "${REFERENCE_ROOT}/output"
+rm -Rf "${OUTPUT_DIR}"
 
 echo "+++ Creating temporary directories"
 # Create all required directories
@@ -80,6 +83,6 @@ echo "+++ Running brodocs"
 # Run brodocs
 docker run \
     -v "${REFERENCE_ROOT}/includes:/source" \
-    -v "${REFERENCE_ROOT}/output:/build" \
+    -v "${OUTPUT_DIR}:/build" \
     -v "${REFERENCE_ROOT}:/manifest" \
     "gcr.io/kubebuilder/brodocs@sha256:81a93f8d3dde22288a2ac7ff287d8157ce60c3b4b29a6d66bdef58b4954d55c3"
